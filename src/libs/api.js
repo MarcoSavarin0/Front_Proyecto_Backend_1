@@ -25,6 +25,6 @@ export const apiCall = async (endpoint, method = 'GET', body = null) => {
       return await response.json();
     } catch (error) {
       console.error('Error in API call:', error);
-      throw error; // Re-lanzar el error para manejarlo en el componente
+      throw error; 
     }
   };

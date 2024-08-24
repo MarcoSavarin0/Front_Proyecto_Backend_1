@@ -14,13 +14,12 @@ export const Home = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
-  const [currentRecord, setCurrentRecord] = useState(null);
+  const [search, setSearch] = useState('');
+  const [odontologosFiltrados, setOdontologosFiltrados] = useState([]);
   const [formData, setFormData] = useState({
-    id: '',
     numero_De_Licencia: '',
     nombre: '',
     apellido: ''
-
   });
 
   useEffect(() => {
@@ -50,8 +49,8 @@ export const Home = () => {
   };
 
   const handleEdit = (row) => {
-    setModalTitle('Edit Odontologo');
-    setCurrentRecord(row);
+    setModalTitle('Editar Odontologo');
+
     setFormData({
       id: row.id,
       numero_De_Licencia: row.numero_De_Licencia,
@@ -63,9 +62,9 @@ export const Home = () => {
   };
 
   const handleDelete = async (row) => {
-    console.log('Delete:', row);
+  
     const { id } = row;
-    try { 
+    try {
       await apiCall(`odontologos/${id}`, 'DELETE');
       const updatedOdontologos = await apiCall('odontologos');
       setOdontologos(updatedOdontologos);
@@ -76,7 +75,7 @@ export const Home = () => {
       const updatedOdontologos = await apiCall('odontologos');
       setOdontologos(updatedOdontologos);
     }
-  
+
   };
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,10 +83,9 @@ export const Home = () => {
   };
 
   const handleNewOdontologo = () => {
-    setModalTitle('Create Odontologo');
-    setCurrentRecord(null);
+    setModalTitle('Crear Odontologo');
+
     setFormData({
-      id: '',
       numero_De_Licencia: '',
       nombre: '',
       apellido: '',
@@ -105,15 +103,10 @@ export const Home = () => {
     e.preventDefault();
 
     try {
-      if (modalTitle === 'Edit Odontologo') {
-        console.log('Updating:', formData);
-
+      if (modalTitle === 'Editar Odontologo') {
         await apiCall(`odontologos/editar`, 'PUT', formData);
-
-        console.log('Updated:', formData);
       } else {
         await apiCall('odontologos', 'POST', formData);
-        console.log('Created:', formData);
       }
 
       const updatedOdontologos = await apiCall('odontologos');
@@ -124,9 +117,38 @@ export const Home = () => {
       setError(error.message);
     }
   };
+  const handleSearch = async (e) => {
+    const { value } = e.target;
+    setSearch(value);
+    setLoading(true);
+
+    if (value === "") {
+      setOdontologosFiltrados([]);
+      setError("");
+      setLoading(false);
+      return;
+    }
+
+    const filteredData = odontologos.filter((odontologo) => {
+      return (
+        odontologo.nombre.toLowerCase().includes(value.toLowerCase()) ||
+        odontologo.apellido.toLowerCase().includes(value.toLowerCase()) ||
+        odontologo.numero_De_Licencia.toLowerCase().includes(value.toLowerCase())
+      );
+    });
+
+    if (filteredData.length === 0) {
+      setError('No se encontraron resultados');
+      setOdontologosFiltrados([]);
+    } else {
+      setError("");
+      setOdontologosFiltrados(filteredData);
+    }
+    setLoading(false);
+  };
 
   return (
-    <MainLayout title="Odontologo" buttonText="Nuevo odontologo" onButtonClick={handleNewOdontologo}>
+    <MainLayout title="Odontologo" buttonText="Nuevo odontologo" onButtonClick={handleNewOdontologo} onSearch={handleSearch}>
       <div>
         <ErrorPopOut errorMessage={error} onClose={handleCloseError} />
         <h1 className="text-xl font-semibold mb-4">Odontólogos</h1>
@@ -134,7 +156,7 @@ export const Home = () => {
         {loading ? (
           <TableSkeleton />
         ) : (
-          <Table columns={columns} data={odontologos} onEdit={handleEdit} onDelete={handleDelete} />
+          <Table columns={columns} data={odontologosFiltrados.length > 0 ? odontologosFiltrados : odontologos} onEdit={handleEdit} onDelete={handleDelete} />
         )}
 
         <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={modalTitle}>
@@ -142,7 +164,7 @@ export const Home = () => {
             formValues={formData}
             onChange={handleChange}
             onSubmit={handleSubmit}
-            isEdit={modalTitle === 'Edit Odontologo'}
+            isEdit={modalTitle === 'Editar Odontologo'}
           />
         </Modal>
       </div>

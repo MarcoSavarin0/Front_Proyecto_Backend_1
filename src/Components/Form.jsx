@@ -3,64 +3,71 @@
 export const Form = ({ formValues, onChange, onSubmit, isEdit }) => {
     return (
         <form onSubmit={onSubmit}>
-            <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero_De_Licencia">
-                    License Number
-                </label>
-                <input
-                    id="numero_De_Licencia"
-                    name="numero_De_Licencia"
-                    type="text"
-                    value={formValues.numero_De_Licencia || ''}
-                    onChange={onChange}
-                    className="w-full px-3 py-2 border rounded"
-                    required
-                />
-            </div>
-            <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nombre">
-                    First Name
-                </label>
-                <input
-                    id="nombre"
-                    name="nombre"
-                    type="text"
-                    value={formValues.nombre || ''}
-                    onChange={onChange}
-                    className="w-full px-3 py-2 border rounded"
-                    required
-                />
-            </div>
-            <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="apellido">
-                    Last Name
-                </label>
-                <input
-                    id="apellido"
-                    name="apellido"
-                    type="text"
-                    value={formValues.apellido || ''}
-                    onChange={onChange}
-                    className="w-full px-3 py-2 border rounded"
-                    required
-                />
-            </div>
-            {!isEdit && (
-                <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="id">
-                        ID
-                    </label>
-                    <input
-                        id="id"
-                        name="id"
-                        type="text"
-                        value={formValues.id || ''}
-                        onChange={onChange}
-                        className="w-full px-3 py-2 border rounded"
-                        disabled={isEdit}
-                    />
-                </div>
-            )}
+            {Object.keys(formValues).map((key) => {
+                if(key == 'fechaIngreso'){
+                    return (
+                        <div className="mb-4" key={key}>
+                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={key}>
+                                {key
+                                    .replace(/_/g, ' ')
+                                    .replace(/\b\w/g, (l) => l.toUpperCase())
+                                }
+                            </label>
+                            <input
+                                id={key}
+                                name={key}
+                                type="date"
+                                value={formValues[key] || ''}
+                                onChange={onChange}
+                                className="w-full px-3 py-2 border rounded"
+                                required
+                            />
+                        </div>
+                    );
+                }
+                // Si el campo es "id", y si está en modo edición, no lo mostramos
+                if (key === 'id' || key === 'idDomicilio') {
+                    return (
+                        <div className="mb-4" key={key}>
+                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={key}>
+                                {key
+                                    .replace(/_/g, ' ')
+                                    .replace(/\b\w/g, (l) => l.toUpperCase())
+                                }
+                            </label>
+                            <input
+                                id={key}
+                                name={key}
+                                type="text"
+                                value={formValues[key] || ''}
+                                onChange={onChange}
+                                className="w-full px-3 py-2 border rounded bg-gray-200" 
+                                readOnly 
+                            />
+                        </div>
+                    );
+                }
+                return (
+                    <div className="mb-4" key={key}>
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={key}>
+                            {key
+                                .replace(/_/g, ' ')
+                                .replace(/\b\w/g, (l) => l.toUpperCase())
+                            }
+                        </label>
+                        <input
+                            id={key}
+                            name={key}
+                            type="text"
+                            value={formValues[key] || ''}
+                            onChange={onChange}
+                            className="w-full px-3 py-2 border rounded"
+                            required
+                        />
+                    </div>
+                );
+            
+            })}
             <div className="flex justify-end">
                 <button
                     type="submit"
@@ -71,5 +78,4 @@ export const Form = ({ formValues, onChange, onSubmit, isEdit }) => {
             </div>
         </form>
     );
-
 };
