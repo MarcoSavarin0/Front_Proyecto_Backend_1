@@ -7,167 +7,184 @@ import { TableSkeleton } from "../Components/TableSkeleton";
 import { ErrorPopOut } from "../Components/ErrorPopOut";
 import { Modal } from "../Components/Modal";
 import { Form } from "../Components/Form";
-
+import { Alert } from "../Components/Alert";
 export const Home = () => {
-  const [odontologos, setOdontologos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState('');
-  const [search, setSearch] = useState('');
-  const [odontologosFiltrados, setOdontologosFiltrados] = useState([]);
-  const [formData, setFormData] = useState({
-    numero_De_Licencia: '',
-    nombre: '',
-    apellido: ''
-  });
+    const [odontologos, setOdontologos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalTitle, setModalTitle] = useState('');
+    const [search, setSearch] = useState('');
+    const [odontologosFiltrados, setOdontologosFiltrados] = useState([]);
+    const [formData, setFormData] = useState({
+        numero_De_Licencia: '',
+        nombre: '',
+        apellido: ''
+    });
+    const [alert, setAlert] = useState(null);
+    useEffect(() => {
+        const fetchOdontologos = async () => {
+            try {
+                const data = await apiCall('odontologos');
+                setOdontologos(data);
+            } catch (error) {
+                setError(error.message);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  useEffect(() => {
-    const fetchOdontologos = async () => {
-      try {
-        const data = await apiCall('odontologos');
-        setOdontologos(data);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
+        fetchOdontologos();
+    }, []);
+
+    const columns = [
+        { Header: 'Número de Licencia', accessor: 'numero_De_Licencia' },
+        { Header: 'Nombre', accessor: 'nombre' },
+        { Header: 'Apellido', accessor: 'apellido' },
+        { Header: 'ID', accessor: 'id' },
+    ];
+
+    const handleCloseError = () => {
+        setError(null);
     };
 
-    fetchOdontologos();
-  }, []);
+    const handleEdit = (row) => {
+        setModalTitle('Editar Odontologo');
 
-  const columns = [
-    { Header: 'Número de Licencia', accessor: 'numero_De_Licencia' },
-    { Header: 'Nombre', accessor: 'nombre' },
-    { Header: 'Apellido', accessor: 'apellido' },
-    { Header: 'ID', accessor: 'id' },
-  ];
+        setFormData({
+            id: row.id,
+            numero_De_Licencia: row.numero_De_Licencia,
+            nombre: row.nombre,
+            apellido: row.apellido
 
-  const handleCloseError = () => {
-    setError(null);
-  };
+        });
+        setIsModalOpen(true);
+    };
 
-  const handleEdit = (row) => {
-    setModalTitle('Editar Odontologo');
+    const handleDelete = async (row) => {
 
-    setFormData({
-      id: row.id,
-      numero_De_Licencia: row.numero_De_Licencia,
-      nombre: row.nombre,
-      apellido: row.apellido
+        const { id } = row;
+        try {
+            await apiCall(`odontologos/${id}`, 'DELETE');
+            const updatedOdontologos = await apiCall('odontologos');
+            setOdontologos(updatedOdontologos);
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setAlert({ type: 'success', message: `Odontologo con el id ${id} eliminado con éxito` });
+                setTimeout(() => {
+                    setAlert(null);
+                }, 3000);
+            setLoading(false);
+            const updatedOdontologos = await apiCall('odontologos');
+            setOdontologos(updatedOdontologos);
+        }
 
-    });
-    setIsModalOpen(true);
-  };
+    };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
 
-  const handleDelete = async (row) => {
-  
-    const { id } = row;
-    try {
-      await apiCall(`odontologos/${id}`, 'DELETE');
-      const updatedOdontologos = await apiCall('odontologos');
-      setOdontologos(updatedOdontologos);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-      const updatedOdontologos = await apiCall('odontologos');
-      setOdontologos(updatedOdontologos);
-    }
+    const handleNewOdontologo = () => {
+        setModalTitle('Crear Odontologo');
 
-  };
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+        setFormData({
+            numero_De_Licencia: '',
+            nombre: '',
+            apellido: '',
 
-  const handleNewOdontologo = () => {
-    setModalTitle('Crear Odontologo');
+        });
+        setIsModalOpen(true);
 
-    setFormData({
-      numero_De_Licencia: '',
-      nombre: '',
-      apellido: '',
+    };
 
-    });
-    setIsModalOpen(true);
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
 
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
+        try {
+            if (modalTitle === 'Editar Odontologo') {
+                await apiCall(`odontologos/editar`, 'PUT', formData);
+                setAlert({ type: 'success', message: 'Odontologo Actualizado con éxito' });
+                setTimeout(() => {
+                    setAlert(null);
+                }, 3000);
+            } else {
+                await apiCall('odontologos', 'POST', formData);
+                setAlert({ type: 'success', message: 'Odontologo creado con éxito' });
+                setTimeout(() => {
+                    setAlert(null);
+                }, 3000);
+            }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+            const updatedOdontologos = await apiCall('odontologos');
+            setOdontologos(updatedOdontologos);
 
-    try {
-      if (modalTitle === 'Editar Odontologo') {
-        await apiCall(`odontologos/editar`, 'PUT', formData);
-      } else {
-        await apiCall('odontologos', 'POST', formData);
-      }
+            handleCloseModal();
+        } catch (error) {
+            setError(error.message);
+        }
+    };
+    const handleSearch = async (e) => {
+        const { value } = e.target;
+        setSearch(value);
+        setLoading(true);
 
-      const updatedOdontologos = await apiCall('odontologos');
-      setOdontologos(updatedOdontologos);
+        if (value === "") {
+            setOdontologosFiltrados([]);
+            setError("");
+            setLoading(false);
+            return;
+        }
 
-      handleCloseModal();
-    } catch (error) {
-      setError(error.message);
-    }
-  };
-  const handleSearch = async (e) => {
-    const { value } = e.target;
-    setSearch(value);
-    setLoading(true);
+        const filteredData = odontologos.filter((odontologo) => {
+            return (
+                odontologo.nombre.toLowerCase().includes(value.toLowerCase()) ||
+                odontologo.apellido.toLowerCase().includes(value.toLowerCase()) ||
+                odontologo.numero_De_Licencia.toLowerCase().includes(value.toLowerCase())
+            );
+        });
 
-    if (value === "") {
-      setOdontologosFiltrados([]);
-      setError("");
-      setLoading(false);
-      return;
-    }
+        if (filteredData.length === 0) {
+            setAlert({ type: 'error', message: 'No se encontraron resultados' });
+            setTimeout(() => {
+                setAlert(null);
+            }, 3000);
+            setOdontologosFiltrados([]);
+        } else {
+            setError("");
+            setOdontologosFiltrados(filteredData);
+        }
+        setLoading(false);
+    };
 
-    const filteredData = odontologos.filter((odontologo) => {
-      return (
-        odontologo.nombre.toLowerCase().includes(value.toLowerCase()) ||
-        odontologo.apellido.toLowerCase().includes(value.toLowerCase()) ||
-        odontologo.numero_De_Licencia.toLowerCase().includes(value.toLowerCase())
-      );
-    });
+    return (
+        <MainLayout title="Odontologo" buttonText="Nuevo odontologo" onButtonClick={handleNewOdontologo} onSearch={handleSearch}>
+            <div>
+                <ErrorPopOut errorMessage={error} onClose={handleCloseError} />
+                <h1 className="text-xl font-semibold mb-4">Odontólogos</h1>
+                {alert && (
+                    <Alert type={alert.type} message={alert.message} />
+                )}
+                {loading ? (
+                    <TableSkeleton />
+                ) : (
+                    <Table columns={columns} data={odontologosFiltrados.length > 0 ? odontologosFiltrados : odontologos} onEdit={handleEdit} onDelete={handleDelete} />
+                )}
 
-    if (filteredData.length === 0) {
-      setError('No se encontraron resultados');
-      setOdontologosFiltrados([]);
-    } else {
-      setError("");
-      setOdontologosFiltrados(filteredData);
-    }
-    setLoading(false);
-  };
-
-  return (
-    <MainLayout title="Odontologo" buttonText="Nuevo odontologo" onButtonClick={handleNewOdontologo} onSearch={handleSearch}>
-      <div>
-        <ErrorPopOut errorMessage={error} onClose={handleCloseError} />
-        <h1 className="text-xl font-semibold mb-4">Odontólogos</h1>
-
-        {loading ? (
-          <TableSkeleton />
-        ) : (
-          <Table columns={columns} data={odontologosFiltrados.length > 0 ? odontologosFiltrados : odontologos} onEdit={handleEdit} onDelete={handleDelete} />
-        )}
-
-        <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={modalTitle}>
-          <Form
-            formValues={formData}
-            onChange={handleChange}
-            onSubmit={handleSubmit}
-            isEdit={modalTitle === 'Editar Odontologo'}
-          />
-        </Modal>
-      </div>
-    </MainLayout>
-  );
+                <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={modalTitle}>
+                    <Form
+                        formValues={formData}
+                        onChange={handleChange}
+                        onSubmit={handleSubmit}
+                        isEdit={modalTitle === 'Editar Odontologo'}
+                    />
+                </Modal>
+            </div>
+        </MainLayout>
+    );
 };

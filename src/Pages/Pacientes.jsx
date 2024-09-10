@@ -81,7 +81,7 @@ export const Pacientes = () => {
             await apiCall(`pacientes/${id}`, 'DELETE');
             const updatedPacientes = await apiCall('pacientes');
             setPacientes(updatedPacientes);
-            setAlert({ type: 'success', message: 'Paciente eliminado con éxito' });
+            setAlert({ type: 'success', message: 'Paciente con el id ' + id + ' eliminado con éxito' });
             setTimeout(() => {
                 setAlert(null);
             }, 5000);
